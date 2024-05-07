@@ -8,6 +8,7 @@ const complectationRouter = require('./complectationsRouter');
 const colorRouter = require('./colorRouter');
 const transmissionRouter = require('./transmissionRouter');
 const suspensionRouter = require('./suspensionRouter');
+const optionPackRouter = require('./optionPackRouter');
 
 router.use('/users', userRouter);
 router.use('/models', modelRouter);
@@ -17,5 +18,6 @@ router.use('/transmissions', transmissionRouter);
 router.use('/suspensions', suspensionRouter);
 router.use('/interiors', interiorsRouter);
 router.use('/colors', colorRouter);
+router.use('/optionPacks', optionPackRouter);
 
 module.exports = router;

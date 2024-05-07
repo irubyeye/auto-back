@@ -7,10 +7,58 @@ class modelController {
 			delete req.body._id;
 			delete req.body.complectations;
 			const newCar = await Car.create(req.body);
+
+			const carComplete = await Car.aggregate([
+				{
+					$match: { _id: newCar._id }
+				},
+				{
+					$lookup: {
+						from: "colors",
+						localField: "colors",
+						foreignField: "_id",
+						as: "colors",
+					}
+				},
+				{
+					$group: {
+						_id: "$_id",
+						img: {
+							$first: "$img",
+						},
+						origin: {
+							$first: "$origin",
+						},
+						brand: {
+							$first: "$brand",
+						},
+						model: {
+							$first: "$model",
+						},
+						body: {
+							$first: "$body",
+						},
+						engineDisplacement: {
+							$first: "$engineDisplacement",
+						},
+						modelYear: {
+							$first: "$modelYear",
+						},
+						basePrice: {
+							$first: "$basePrice",
+						},
+						complectations: {
+							$first: "$complectations",
+						},
+						colors: {
+							$first: "$colors",
+						},
+					},
+				},
+			]);
 			// res.set('Access-Control-Allow-Origin', process.env.FrontURL);
-			return res.json(newCar);
+			return res.json(carComplete[0]);
 		} catch (error) {
-			console.log(error);
 			return res.status(500).json(error);
 		}
 	}
@@ -18,9 +66,9 @@ class modelController {
 	async getAll(req, res) {
 		try {
 			const data = await Car.find();
-			console.log(data);
 			return res.json(data);
 		} catch (error) {
+			console.log("getCarsError: " + error);
 			return res.status(500).json(error);
 		}
 	}
@@ -94,14 +142,6 @@ class modelController {
 					},
 				},
 				{
-					$lookup: {
-						from: "optionPacks",
-						localField: "optionPacks",
-						foreignField: "_id",
-						as: "optionPacks",
-					},
-				},
-				{
 					$group: {
 						_id: "$_id",
 						img: {
@@ -134,9 +174,6 @@ class modelController {
 						colors: {
 							$first: "$colors",
 						},
-						optionPacks: {
-							$first: "$optionPacks",
-						},
 					},
 				},
 			]);
@@ -149,19 +186,22 @@ class modelController {
 	async update(req, res) {
 		try {
 			const updateDocument = {
-				$set: { img: req.body.img },
-				$set: { origin: req.body.origin },
-				$set: { brand: req.body.brand },
-				$set: { model: req.body.model },
-				$set: { body: req.body.body },
-				$set: { engineDisplacement: req.body.engineDisplacement },
-				$set: { modelYear: req.body.modelYear },
-				$set: { basePrice: req.body.basePrice },
-				$set: { complectations: new ObjectId(req.body.complectations._id) },
-				$set: { colors: new ObjectId(req.body.colors._id) },
-				$set: { optionPacks: new ObjectId(req.body.optionPacks._id) },
+				$set: {
+					img: req.body.img,
+					origin: req.body.origin,
+					brand: req.body.brand,
+					model: req.body.model,
+					body: req.body.body,
+					engineDisplacement: req.body.engineDisplacement,
+					modelYear: req.body.modelYear,
+					basePrice: req.body.basePrice,
+					// complectations: {
+					// $push: new ObjectId(req.body.complectations._id)
+					// },
+					// colors: new ObjectId(req.body.colors._id),
+					// optionPacks: new ObjectId(req.body.optionPacks?._id),
+				},
 			};
-
 			const result = await Car.updateOne({ _id: new ObjectId(req.body._id) }, updateDocument);
 			return res.json(result);
 		} catch (error) {

@@ -4,6 +4,8 @@ const engineController = require('../controllers/engineController.js');
 
 router.get('/getAvailable', engineController.getAvailable);
 router.post('/add', engineController.add);
-router.put('/edit', engineController.edit);
+router.patch('/update', engineController.update);
+router.delete('/delete', engineController.delete);
+
 
 module.exports = router;

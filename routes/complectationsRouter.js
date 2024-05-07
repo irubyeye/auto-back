@@ -4,5 +4,7 @@ const complectationsController = require('../controllers/complectationsControlle
 
 router.get('/get', complectationsController.get);
 router.post('/add', complectationsController.add);
+router.patch('/update', complectationsController.update);
+router.delete('/delete', complectationsController.delete);
 
 module.exports = router;
