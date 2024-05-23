@@ -1,9 +1,18 @@
 const Router = require("express");
 const router = new Router();
 const userController = require('../controllers/userController.js');
+const { check } = require('express-validator');
 
-router.post('/registration', userController.registration);
-router.post('/login', userController.login);
+router.post('/registration', [
+	check('username', 'Enter username').notEmpty(),
+	check('password', 'Password must be 4-10 characters long').isLength({ min: 4, max: 10 }),
+], userController.registration);
+
+router.post('/login', [
+	check('username', 'Enter username').notEmpty(),
+	check('password', 'Password must be 4-10 characters long').isLength({ min: 4, max: 10 }),
+], userController.login);
+
 router.get('/auth', userController.auth);
 
 module.exports = router;

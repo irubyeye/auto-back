@@ -1,9 +1,12 @@
 const Car = require('../schemas/Car.js');
 const { ObjectId } = require('mongodb');
+const { validationResult } = require('express-validator');
 
 class modelController {
 	async add(req, res) {
 		try {
+			const errors = validationResult(req);
+			if (!errors.isEmpty()) return res.status(400).json({ message: "Creation error: ", errors })
 			delete req.body._id;
 			delete req.body.complectations;
 			const newCar = await Car.create(req.body);
@@ -25,9 +28,6 @@ class modelController {
 						_id: "$_id",
 						img: {
 							$first: "$img",
-						},
-						origin: {
-							$first: "$origin",
 						},
 						brand: {
 							$first: "$brand",
@@ -63,9 +63,31 @@ class modelController {
 		}
 	}
 
-	async getAll(req, res) {
+	async getMany(req, res) {
 		try {
-			const data = await Car.find();
+			const pipeline = [];
+
+			if (req.query.brand) {
+				pipeline.push({
+					$match: {
+						brand: req.query.brand
+					}
+				})
+			}
+
+			if (req.query.skip) {
+				pipeline.push({
+					$skip: +req.query.skip
+				})
+			}
+
+			if (req.query.limit) {
+				pipeline.push({
+					$limit: +req.query.limit
+				})
+			}
+
+			const data = await Car.aggregate(pipeline);
 			return res.json(data);
 		} catch (error) {
 			console.log("getCarsError: " + error);
@@ -81,103 +103,89 @@ class modelController {
 						_id: new ObjectId(req.query.id),
 					},
 				},
-				{
-					$lookup: {
-						from: "complectations",
-						localField: "complectations",
-						foreignField: "_id",
-						as: "complectations",
-					},
-				},
-				{
-					$unwind: {
-						path: "$complectations",
-					},
-				},
-				{
-					$lookup: {
-						from: "colors",
-						localField: "colors",
-						foreignField: "_id",
-						as: "colors",
-					}
-				},
-				{
-					$lookup: {
-						from: "engines",
-						localField: "complectations.engine",
-						foreignField: "_id",
-						as: "complectations.engine",
-					},
-				},
-				{
-					$unwind: {
-						path: "$complectations.engine",
-					},
-				},
-				{
-					$lookup: {
-						from: "transmissions",
-						localField: "complectations.transmission",
-						foreignField: "_id",
-						as: "complectations.transmission",
-					},
-				},
-				{
-					$unwind: {
-						path: "$complectations.transmission",
-					}
-				},
-				{
-					$lookup: {
-						from: "suspensions",
-						localField: "complectations.suspension",
-						foreignField: "_id",
-						as: "complectations.suspension",
-					},
-				},
-				{
-					$unwind: {
-						path: "$complectations.suspension",
-					},
-				},
-				{
-					$group: {
-						_id: "$_id",
-						img: {
-							$first: "$img",
-						},
-						origin: {
-							$first: "$origin",
-						},
-						brand: {
-							$first: "$brand",
-						},
-						model: {
-							$first: "$model",
-						},
-						body: {
-							$first: "$body",
-						},
-						engineDisplacement: {
-							$first: "$engineDisplacement",
-						},
-						modelYear: {
-							$first: "$modelYear",
-						},
-						basePrice: {
-							$first: "$basePrice",
-						},
-						complectations: {
-							$push: "$complectations",
-						},
-						colors: {
-							$first: "$colors",
-						},
-					},
-				},
+				// {
+				// 	$lookup: {
+				// 		from: "complectations",
+				// 		localField: "complectations",
+				// 		foreignField: "_id",
+				// 		as: "complectations",
+				// 	},
+				// },
+				// {
+				// 	$unwind: {
+				// 		path: "$complectations",
+				// 	},
+				// },
+				// {
+				// 	$lookup: {
+				// 		from: "engines",
+				// 		localField: "complectations.engine",
+				// 		foreignField: "_id",
+				// 		as: "complectations.engine",
+				// 	},
+				// },
+				// {
+				// 	$unwind: {
+				// 		path: "$complectations.engine",
+				// 	},
+				// },
+				// {
+				// 	$lookup: {
+				// 		from: "transmissions",
+				// 		localField: "complectations.transmission",
+				// 		foreignField: "_id",
+				// 		as: "complectations.transmission",
+				// 	},
+				// },
+				// {
+				// 	$unwind: {
+				// 		path: "$complectations.transmission",
+				// 	}
+				// },
+				// {
+				// 	$lookup: {
+				// 		from: "suspensions",
+				// 		localField: "complectations.suspension",
+				// 		foreignField: "_id",
+				// 		as: "complectations.suspension",
+				// 	},
+				// },
+				// {
+				// 	$unwind: {
+				// 		path: "$complectations.suspension",
+				// 	},
+				// },
+				// {
+				// 	$group: {
+				// 		_id: "$_id",
+				// 		img: {
+				// 			$first: "$img",
+				// 		},
+				// 		brand: {
+				// 			$first: "$brand",
+				// 		},
+				// 		model: {
+				// 			$first: "$model",
+				// 		},
+				// 		body: {
+				// 			$first: "$body",
+				// 		},
+				// 		engineDisplacement: {
+				// 			$first: "$engineDisplacement",
+				// 		},
+				// 		modelYear: {
+				// 			$first: "$modelYear",
+				// 		},
+				// 		basePrice: {
+				// 			$first: "$basePrice",
+				// 		},
+				// 		complectations: {
+				// 			$push: "$complectations",
+				// 		},
+				// 	},
+				// },
 			]);
-			res.json(data);
+			return res.json(data);
 		} catch (error) {
 			return res.status(500).json(error);
 		}
@@ -185,6 +193,8 @@ class modelController {
 
 	async update(req, res) {
 		try {
+			const errors = validationResult(req);
+			if (!errors.isEmpty()) return res.status(400).json({ message: "Update error: ", errors })
 			const updateDocument = {
 				$set: {
 					img: req.body.img,
@@ -195,10 +205,8 @@ class modelController {
 					engineDisplacement: req.body.engineDisplacement,
 					modelYear: req.body.modelYear,
 					basePrice: req.body.basePrice,
-					// complectations: {
-					// $push: new ObjectId(req.body.complectations._id)
-					// },
-					// colors: new ObjectId(req.body.colors._id),
+					interior: req.body.interior,
+					exterior: req.body.exterior
 					// optionPacks: new ObjectId(req.body.optionPacks?._id),
 				},
 			};
@@ -206,6 +214,32 @@ class modelController {
 			return res.json(result);
 		} catch (error) {
 			console.log(error);
+			return res.status(500).json(error);
+		}
+	}
+
+	async deleteColor(req, res) {
+		try {
+			const updateDocument = {
+				$pull: { img: { color: req.body.img.color } }
+			}
+			const result = await Car.updateOne({ _id: new ObjectId(req.body._id) }, updateDocument);
+			return res.json(result);
+		} catch (error) {
+			return res.status(500).json(error);
+		}
+	}
+
+	async addColor(req, res) {
+		try {
+			const errors = validationResult(req);
+			if (!errors.isEmpty()) return res.status(400).json({ message: "Color error: ", errors })
+			const updateDocument = {
+				$push: { img: { color: req.body.img.color, srcset: req.body.img.srcset } }
+			}
+			const result = await Car.updateOne({ _id: new ObjectId(req.body._id) }, updateDocument);
+			return res.json(result);
+		} catch (error) {
 			return res.status(500).json(error);
 		}
 	}
