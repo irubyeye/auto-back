@@ -13,7 +13,10 @@ router.post('/login', [
 	check('password', 'Password must be 4-10 characters long').isLength({ min: 4, max: 10 }),
 ], userController.login);
 
-router.patch('/update', userController.update);
+router.patch('/update', [
+	check('contacts.email', 'Wrong E-Mail address').isEmail(),
+	check('contacts.phone', 'Wrong phone number').isMobilePhone(),
+], userController.update);
 
 router.get('/auth', userController.auth);
 

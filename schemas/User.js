@@ -38,6 +38,10 @@ const Complectation = new Schema({
 const User = new Schema({
 	username: { type: String, unique: true, required: true },
 	password: { type: String, required: true },
+	contacts: {
+		email: String,
+		phone: String,
+	},
 	roles: { type: [String], default: ["user"] },
 	orders: { type: [Schema.Types.ObjectId], ref: "Order" },
 	savedComplects: { type: [Complectation], default: [] },

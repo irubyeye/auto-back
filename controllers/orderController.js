@@ -1,5 +1,6 @@
 const Order = require('../schemas/Order.js');
 const { ObjectId } = require('mongodb');
+const { validationResult } = require('express-validator');
 
 class orderController {
 	async getUserOrders(req, res) {
@@ -7,7 +8,7 @@ class orderController {
 			const data = await Order.aggregate([
 				{
 					$match: {
-						client: new ObjectId(req.query.id)
+						"client.id": new ObjectId(req.query.id)
 					}
 				},
 				{
@@ -146,6 +147,16 @@ class orderController {
 		}
 	}
 
+	async getAll(req, res) {
+		try {
+			const orders = await Order.find({});
+			return res.json(orders);
+		} catch (error) {
+			console.log(error);
+			return res.status(500).json(error);
+		}
+	}
+
 	async getOne(req, res) {
 		try {
 			const data = await Order.findOne({ _id: new ObjectId(req.query.id) });
@@ -156,8 +167,29 @@ class orderController {
 		}
 	}
 
+	async update(req, res) {
+		try {
+			const { client, car, accessories, totalPrice, status } = req.body;
+			const updateDocument = {
+				$set: {
+					client, car, accessories, totalPrice, status
+				}
+			}
+			const updResult = await Order.updateOne({ _id: new ObjectId(req.body._id) }, updateDocument);
+			return res.json(updResult);
+		} catch (error) {
+			console.log(error);
+			return res.status(500).json(error);
+		}
+	}
+
 	async create(req, res) {
 		try {
+			const errors = validationResult(req);
+			if (!errors.isEmpty()) return res.status(400).json({ message: "Ordering error: ", errors })
+			if (!req.body.client.contacts.email?.length && !req.body.client.contacts.phone?.length) {
+				return res.status(400).json({ message: "Ordering error: ", errors: { errors: [{ msg: "At least 1 contact required" }] } })
+			}
 			const newOrder = await Order.create(req.body);
 			return res.json(newOrder);
 		} catch (error) {

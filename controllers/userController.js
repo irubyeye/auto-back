@@ -66,10 +66,10 @@ class userController {
 
 	async update(req, res) {
 		try {
-			const { username, hashedPassword, roles, orders, savedComplects } = req.body;
+			const { username, hashedPassword, contacts, roles, orders, savedComplects } = req.body;
 			const updateDocument = {
 				$set: {
-					username, hashedPassword, roles, orders, savedComplects
+					username, hashedPassword, contacts, roles, orders, savedComplects
 				}
 			}
 			const updResult = await User.updateOne({ _id: new ObjectId(req.body._id) }, updateDocument);

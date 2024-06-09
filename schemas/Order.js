@@ -7,7 +7,13 @@ const Accessories = require('./Accessories');
 const { Schema } = mongoose;
 
 const Order = new mongoose.Schema({
-	client: { type: Schema.Types.ObjectId, ref: "User", required: true },
+	client: {
+		id: { type: Schema.Types.ObjectId, ref: "User", required: true },
+		contacts: {
+			email: String,
+			phone: String
+		},
+	},
 	car: {
 		_id: { type: Schema.Types.ObjectId, required: true },
 		img: {
