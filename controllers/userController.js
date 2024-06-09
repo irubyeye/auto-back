@@ -1,4 +1,5 @@
 const User = require('../schemas/User.js');
+const { ObjectId } = require('mongodb');
 const bcrypt = require('bcryptjs');
 const { validationResult } = require('express-validator');
 const jwt = require('jsonwebtoken');
@@ -52,13 +53,27 @@ class userController {
 
 	async auth(req, res) {
 		try {
-
 			const token = req.headers.authorization.split(' ')[1];
 			if (!token) return res.status(403).json({ message: `User not authorized` });
 			const decodedData = jwt.verify(token, process.env.secret);
 			const user = await User.findOne({ _id: decodedData.id });
-			console.log(user);
 			return res.json(user);
+		} catch (error) {
+			console.log(error);
+			return res.status(500).json(error);
+		}
+	}
+
+	async update(req, res) {
+		try {
+			const { username, hashedPassword, roles, orders, savedComplects } = req.body;
+			const updateDocument = {
+				$set: {
+					username, hashedPassword, roles, orders, savedComplects
+				}
+			}
+			const updResult = await User.updateOne({ _id: new ObjectId(req.body._id) }, updateDocument);
+			return res.json(updResult);
 		} catch (error) {
 			console.log(error);
 			return res.status(500).json(error);

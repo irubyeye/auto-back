@@ -21,7 +21,8 @@ router.get('/:id', modelController.getOne);
 router.patch('/update', modelCheckSet, modelController.update);
 router.patch('/deleteColor', modelController.deleteColor);
 router.patch('/addColor', [
-	check("img.color", "Set color").notEmpty(),
+	check("img.color.en", "Set color (en)").notEmpty(),
+	check("img.color.ua", "Set color (ua)").notEmpty(),
 	check("img.srcset", "Provide valid images URLs").isURL()
 ], modelController.addColor);
 

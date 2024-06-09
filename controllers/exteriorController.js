@@ -22,7 +22,17 @@ class exteriorsController {
 
 	async update(req, res) {
 		try {
-
+			const updateDocument = {
+				$set: {
+					availableFor: req.body.availableFor,
+					type: req.body.type,
+					value: req.body.value,
+					price: +req.body.price
+				},
+			};
+			// update if _id match or upsert & return new
+			const result = await ExteriorItem.findOneAndUpdate({ _id: new ObjectId(req.body._id) }, updateDocument, { upsert: true, new: true });
+			return res.json(result);
 		} catch (error) {
 			return res.status(500).json(error);
 		}
@@ -30,7 +40,8 @@ class exteriorsController {
 
 	async delete(req, res) {
 		try {
-			return res.json(['a?'])
+			const result = await ExteriorItem.deleteOne({ _id: new ObjectId(req.body) });
+			return res.json(result);
 		} catch (error) {
 			return res.status(500).json(error);
 		}

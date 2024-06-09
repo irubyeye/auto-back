@@ -1,6 +1,29 @@
 const Car = require('../schemas/Car.js');
+const Complectation = require('../schemas/Complectation.js');
+const Engine = require('../schemas/Engine.js');
+const Transmission = require('../schemas/Transmission.js');
+const Suspension = require('../schemas/Suspension.js');
+const InteriorItem = require('../schemas/InteriorItem.js');
+const ExteriorItem = require('../schemas/ExteriorItem.js');
+const Wheels = require('../schemas/Wheels.js');
 const { ObjectId } = require('mongodb');
 const { validationResult } = require('express-validator');
+
+const appearanceUseID = (car, category) => {
+	for (const key in car?.[category]) {
+		if (key === "_id") continue;
+		if (Array.isArray(car[category][key])) {
+			if (typeof car[category][key][0] === 'string') return;
+			car[category][key] = car[category][key].map(item => item = item._id);
+		} else {
+			if (typeof car[category][key] === 'string') return;
+			car[category][key] = car[category][key]._id;
+		}
+	}
+	if (car[category] && !Object.keys(car[category]).filter(key => key !== 'features').length && !car[category].features.length) {
+		delete car[category];
+	}
+}
 
 class modelController {
 	async add(req, res) {
@@ -8,57 +31,38 @@ class modelController {
 			const errors = validationResult(req);
 			if (!errors.isEmpty()) return res.status(400).json({ message: "Creation error: ", errors })
 			delete req.body._id;
-			delete req.body.complectations;
 			const newCar = await Car.create(req.body);
+			appearanceUseID(req.body, 'interior');
+			appearanceUseID(req.body, 'exterior');
+			const complectPatch = {
+				$push: { baseModel: new ObjectId(newCar._id) }
+			}
+			const complectUpdate = await Complectation.updateMany({ _id: { $in: req.body?.complectations } }, complectPatch);
 
-			const carComplete = await Car.aggregate([
-				{
-					$match: { _id: newCar._id }
-				},
-				{
-					$lookup: {
-						from: "colors",
-						localField: "colors",
-						foreignField: "_id",
-						as: "colors",
-					}
-				},
-				{
-					$group: {
-						_id: "$_id",
-						img: {
-							$first: "$img",
-						},
-						brand: {
-							$first: "$brand",
-						},
-						model: {
-							$first: "$model",
-						},
-						body: {
-							$first: "$body",
-						},
-						engineDisplacement: {
-							$first: "$engineDisplacement",
-						},
-						modelYear: {
-							$first: "$modelYear",
-						},
-						basePrice: {
-							$first: "$basePrice",
-						},
-						complectations: {
-							$first: "$complectations",
-						},
-						colors: {
-							$first: "$colors",
-						},
-					},
-				},
-			]);
+			const appearanceItemPatch = {
+				$push: { availableFor: new ObjectId(newCar._id) }
+			}
+			const interiorsFilter = {
+				_id: {
+					$in: [req.body?.interior?.trim, req.body?.interior?.seatings]
+				}
+			}
+			if (req.body?.interior?.features) interiorsFilter._id.$in.push(...req.body?.interior?.features);
+			const InteriorsUpdate = await InteriorItem.updateMany(interiorsFilter, appearanceItemPatch);
+
+			const exteriorsFilter = {
+				_id: {
+					$in: [req.body?.exterior?.bumpers, req.body?.exterior?.spoiler]
+				}
+			}
+			if (req.body?.exterior?.features) exteriorsFilter._id.$in.push(...req.body?.exterior?.features);
+			const ExteriorsUpdate = await ExteriorItem.updateMany(exteriorsFilter, appearanceItemPatch);
+			const WheelsUpdate = await Wheels.updateOne({ _id: new ObjectId(req.body?.exterior?.wheels) }, appearanceItemPatch);
+
 			// res.set('Access-Control-Allow-Origin', process.env.FrontURL);
-			return res.json(carComplete[0]);
+			return res.json(newCar);
 		} catch (error) {
+			console.log(error);
 			return res.status(500).json(error);
 		}
 	}
@@ -87,6 +91,14 @@ class modelController {
 				})
 			}
 
+			pipeline.push({
+				$project: {
+					_id: 1,
+					img: 1,
+					model: 1,
+				},
+			});
+
 			const data = await Car.aggregate(pipeline);
 			return res.json(data);
 		} catch (error) {
@@ -102,6 +114,92 @@ class modelController {
 					$match: {
 						_id: new ObjectId(req.query.id),
 					},
+				},
+				{
+					$lookup: {
+						from: "interioritems",
+						localField: "interior.trim",
+						foreignField: "_id",
+						as: "interior.trim",
+					},
+				},
+				{
+					$lookup: {
+						from: "interioritems",
+						localField: "interior.seatings",
+						foreignField: "_id",
+						as: "interior.seatings",
+					},
+				},
+				{
+					$lookup: {
+						from: "interioritems",
+						localField: "interior.features",
+						foreignField: "_id",
+						as: "interior.features",
+					},
+				},
+				{
+					$lookup: {
+						from: "exterioritems",
+						localField: "exterior.bumpers",
+						foreignField: "_id",
+						as: "exterior.bumpers",
+					},
+				},
+				{
+					$lookup: {
+						from: "exterioritems",
+						localField: "exterior.spoiler",
+						foreignField: "_id",
+						as: "exterior.spoiler",
+					},
+				},
+				{
+					$lookup: {
+						from: "wheels",
+						localField: "exterior.wheels",
+						foreignField: "_id",
+						as: "exterior.wheels",
+					},
+				},
+				{
+					$lookup: {
+						from: "exterioritems",
+						localField: "exterior.features",
+						foreignField: "_id",
+						as: "exterior.features",
+					},
+				},
+				{
+					$unwind: {
+						path: '$interior.trim',
+						preserveNullAndEmptyArrays: true
+					}
+				},
+				{
+					$unwind: {
+						path: '$interior.seatings',
+						preserveNullAndEmptyArrays: true
+					}
+				},
+				{
+					$unwind: {
+						path: '$exterior.bumpers',
+						preserveNullAndEmptyArrays: true
+					}
+				},
+				{
+					$unwind: {
+						path: '$exterior.spoiler',
+						preserveNullAndEmptyArrays: true
+					}
+				},
+				{
+					$unwind: {
+						path: '$exterior.wheels',
+						preserveNullAndEmptyArrays: true
+					}
 				},
 				// {
 				// 	$lookup: {
@@ -206,8 +304,8 @@ class modelController {
 					modelYear: req.body.modelYear,
 					basePrice: req.body.basePrice,
 					interior: req.body.interior,
-					exterior: req.body.exterior
-					// optionPacks: new ObjectId(req.body.optionPacks?._id),
+					exterior: req.body.exterior,
+					complectations: req.body.complectations
 				},
 			};
 			const result = await Car.updateOne({ _id: new ObjectId(req.body._id) }, updateDocument);
@@ -247,7 +345,23 @@ class modelController {
 	async delete(req, res) {
 		try {
 			const result = await Car.deleteOne({ _id: new ObjectId(req.body._id) });
-			return res.json(result);
+			const complectPatch = {
+				$pull: {
+					baseModel: {
+						$in: [new ObjectId(req.body._id)]
+					}
+				}
+			}
+			const complectFilter = { baseModel: { $in: new ObjectId(req.body._id) } }
+			const complectUpdate = await Complectation.updateMany(complectFilter, complectPatch);
+
+			const appearanceItemPatch = {
+				$pull: { availableFor: { $in: [req.body._id] } }
+			}
+			const InteriorsUpdate = await InteriorItem.updateMany({ availableFor: { $in: req.body._id } }, appearanceItemPatch);
+			const ExteriorsUpdate = await ExteriorItem.updateMany({ availableFor: { $in: req.body._id } }, appearanceItemPatch);
+			const WheelsUpdate = await Wheels.updateMany({ availableFor: { $in: req.body._id } }, appearanceItemPatch);
+			return res.json({ deleteResult: result, updateResult: { complectUpdate, InteriorsUpdate, ExteriorsUpdate, WheelsUpdate } });
 		} catch (error) {
 			console.log(error);
 			return res.status(500).json(error);

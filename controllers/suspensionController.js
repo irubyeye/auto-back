@@ -23,6 +23,7 @@ class suspensionController {
 			delete req.body._id;
 			const newSuspension = await Suspension.create(req.body);
 			return res.json(newSuspension);
+			return res.json(result);
 		} catch (error) {
 			console.log(`suspension add error: ${error}`);
 			return res.status(500).json(error);
@@ -31,10 +32,12 @@ class suspensionController {
 
 	async update(req, res) {
 		try {
+			const { availableFor, type, price } = req.body;
 			const updateDocument = {
 				$set: {
-					availableFor: req.body.availableFor,
-					type: req.body.type,
+					availableFor,
+					type,
+					price,
 				},
 			};
 			// update if _id match or upsert & return new

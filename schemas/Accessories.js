@@ -1,12 +1,11 @@
 const mongoose = require('mongoose');
 
 const Accessories = new mongoose.Schema({
-	type: { type: String, required: true },
-	description: {
+	img: { type: String, required: true },
+	value: {
 		en: { type: String, required: true },
 		ua: { type: String, required: true }
 	},
-	quantity: { type: Number, required: true },
 	price: { type: Number, required: true },
 });
 

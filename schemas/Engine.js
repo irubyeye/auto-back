@@ -9,6 +9,7 @@ const Engine = new mongoose.Schema({
 	hp: { type: Number, required: true },
 	torque: { type: Number, required: true },
 	turbo: { type: Boolean, required: true },
+	price: { type: Number, default: 0 }
 });
 
 module.exports = mongoose.model('Engine', Engine);

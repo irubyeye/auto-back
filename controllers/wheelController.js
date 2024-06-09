@@ -51,6 +51,15 @@ class wheelController {
 			return res.status(500).json(error);
 		}
 	}
+
+	async delete(req, res) {
+		try {
+			const result = await Wheels.deleteOne({ _id: new ObjectId(req.body) });
+			return res.json(result);
+		} catch (error) {
+			return res.status(500).json(error);
+		}
+	}
 }
 
 module.exports = new wheelController();

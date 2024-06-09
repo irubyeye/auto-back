@@ -6,7 +6,10 @@ const ExteriorItem = require('./ExteriorItem');
 const Wheels = require('./Wheels');
 
 const IMG = new Schema({
-	color: { type: String, required: true },
+	color: {
+		en: { type: String, required: true },
+		ua: { type: String, required: true },
+	},
 	srcset: { type: [String], required: true }
 });
 

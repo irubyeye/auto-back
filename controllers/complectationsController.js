@@ -58,6 +58,59 @@ class complectationsController {
 		}
 	}
 
+	async getOne(req, res) {
+		try {
+			const complect = await Complectation.aggregate([
+				{
+					$match: { _id: new ObjectId(req.query.id) }
+				},
+				{
+					$lookup: {
+						from: "engines",
+						localField: "engine",
+						foreignField: "_id",
+						as: "engine",
+					},
+				},
+				{
+					$lookup: {
+						from: "transmissions",
+						localField: "transmission",
+						foreignField: "_id",
+						as: "transmission",
+					},
+				},
+				{
+					$lookup: {
+						from: "suspensions",
+						localField: "suspension",
+						foreignField: "_id",
+						as: "suspension",
+					},
+				},
+				{
+					$unwind: {
+						path: '$engine'
+					}
+				},
+				{
+					$unwind: {
+						path: '$transmission'
+					}
+				},
+				{
+					$unwind: {
+						path: '$suspension'
+					}
+				},
+			])
+			return res.json(complect);
+		} catch (error) {
+			console.log(error);
+			return res.status(500).json(error);
+		}
+	}
+
 	async add(req, res) {
 		try {
 			const errors = validationResult(req);
@@ -75,7 +128,6 @@ class complectationsController {
 			}
 			// Запись комплектации для всех доступных машин
 			const updResult = await Car.updateMany(carsFilter, carUpdateDocument);
-			console.log(updResult);
 			return res.json(newComplect);
 		} catch (error) {
 			console.log("complect add error: ", error);

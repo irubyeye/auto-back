@@ -13,6 +13,8 @@ router.post('/login', [
 	check('password', 'Password must be 4-10 characters long').isLength({ min: 4, max: 10 }),
 ], userController.login);
 
+router.patch('/update', userController.update);
+
 router.get('/auth', userController.auth);
 
 module.exports = router;

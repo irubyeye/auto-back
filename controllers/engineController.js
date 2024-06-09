@@ -31,15 +31,17 @@ class engineController {
 
 	async update(req, res) {
 		try {
+			const { availableFor, manufacturer, model, volume, hp, torque, turbo, price } = req.body;
 			const updateDocument = {
 				$set: {
-					availableFor: req.body.availableFor,
-					manufacturer: req.body.manufacturer,
-					model: req.body.model,
-					volume: req.body.volume,
-					hp: req.body.hp,
-					torque: req.body.torque,
-					turbo: req.body.turbo,
+					availableFor,
+					manufacturer,
+					model,
+					volume,
+					hp,
+					torque,
+					turbo,
+					price,
 				},
 			};
 			// update if _id match or upsert & return new

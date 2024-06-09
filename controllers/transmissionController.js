@@ -31,12 +31,14 @@ class transmissionController {
 
 	async update(req, res) {
 		try {
+			const { availableFor, type, drive, gears, price } = req.body;
 			const updateDocument = {
 				$set: {
-					availableFor: req.body.availableFor,
-					type: req.body.type,
-					drive: req.body.drive,
-					gears: req.body.gears,
+					availableFor,
+					type,
+					drive,
+					gears,
+					price,
 				},
 			};
 			// update if _id match or upsert & return new

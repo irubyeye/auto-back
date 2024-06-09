@@ -6,6 +6,7 @@ const Transmission = new mongoose.Schema({
 	type: { type: String, required: true },
 	drive: { type: String, required: true },
 	gears: { type: Number, required: true },
+	price: { type: Number, default: 0 }
 });
 
 module.exports = mongoose.model('Transmission', Transmission);
