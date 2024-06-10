@@ -184,7 +184,6 @@ class complectationsController {
 			const carUpdResult = await Car.updateMany(carsFilter, carUpdateDocument);
 
 			const deleteResult = await Complectation.deleteOne({ _id: new ObjectId(req.body._id) });
-			console.log(carUpdResult);
 			return res.json(deleteResult);
 		} catch (error) {
 			console.log("complect del error: ", error);
